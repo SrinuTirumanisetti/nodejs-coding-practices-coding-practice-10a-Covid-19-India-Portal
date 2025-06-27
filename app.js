@@ -84,3 +84,99 @@ app.get("/states/:stateId/", authenticateToken, async (request, response) => {
   const dbState = await db.get(getStateQuery, [stateId]);
   response.send(dbState);
 });
+
+//API 4
+
+app.post("/districts/", authenticateToken, async (request, response) => {
+  const { districtName, stateId, cases, cured, active, deaths } = request.body;
+  const addDistrictQuery = `insert into district(district_name,state_id,cases,cured,active,deaths)
+         values(?,?,?,?,?,?);`;
+  await db.run(addDistrictQuery, [
+    districtName,
+    stateId,
+    cases,
+    cured,
+    active,
+    deaths,
+  ]);
+  response.send("District Successfully Added");
+});
+
+//API 5
+
+app.get(
+  "/districts/:districtId/",
+  authenticateToken,
+  async (request, response) => {
+    const { districtId } = request.params;
+    const getDistrictQuery = `select district_id as districtId,district_name as districtName,state_id as stateId,cases, cured, active, deaths
+    from district where district_id = ?;`;
+    const dbDistrict = await db.get(getDistrictQuery, [districtId]);
+    response.send(dbDistrict);
+  }
+);
+
+//API 6
+
+app.delete(
+  "/districts/:districtId/",
+  authenticateToken,
+  async (request, response) => {
+    const { districtId } = request.params;
+    const deleteDistrictQuery = `delete from district where district_id=?;`;
+    await db.run(deleteDistrictQuery, [districtId]);
+    response.send("District Removed");
+  }
+);
+
+//API 7
+
+app.put(
+  "/districts/:districtId/",
+  authenticateToken,
+  async (request, response) => {
+    const {
+      districtName,
+      stateId,
+      cases,
+      cured,
+      active,
+      deaths,
+    } = request.body;
+    const { districtId } = request.params;
+    const updateDistrictQuery = `update district 
+   set
+   district_name =?,
+   state_id=?,
+   cases=?,
+   cured=?,
+   active=?,
+   deaths=?
+   where district_id=?`;
+    await db.run(updateDistrictQuery, [
+      districtName,
+      stateId,
+      cases,
+      cured,
+      active,
+      deaths,
+      districtId,
+    ]);
+    response.send("District Details Updated");
+  }
+);
+
+//API 8
+
+app.get(
+  "/states/:stateId/stats/",
+  authenticateToken,
+  async (request, response) => {
+    const { stateId } = request.params;
+    const getStatQuery = `select sum(cases) AS totalCases,sum(cured) AS totalCured,sum(active) as totalActive,sum(deaths) as totalDeaths from district where state_id=?;`;
+    const dbStat = await db.get(getStatQuery, [stateId]);
+    response.send(dbStat);
+  }
+);
+
+module.exports = app;
